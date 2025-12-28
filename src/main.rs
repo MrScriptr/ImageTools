@@ -1,4 +1,4 @@
-use core::arch;
+use core::{arch, error};
 use std::{clone, env};
 
 #[derive(Debug)]
@@ -8,12 +8,17 @@ enum Command {
 
 #[derive(Debug)]
 enum Error {
-    InvalidCommand
+    InvalidCommand,
+    NotEnoughParams
 }
 
 fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
-    let path = args[1].clone();
-    let command = args[2].clone().to_lowercase();
+    if args.len() < 2 {
+        return Err(Error::NotEnoughParams);
+    }
+
+    let path = args[0].clone();
+    let command = args[1].clone().to_lowercase();
 
     match command.as_str() {
         "convert" => Ok(Command::Convert(path)),
@@ -21,8 +26,20 @@ fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
     }
 }
 
+fn runcommand(command: Command) {
+
+}
+
+fn printerror(error: Error) {
+
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let command = parseargs(args);
-    println!("{:?}", command)
+
+    match command {
+        Ok(command) => runcommand(command),
+        Err(error) => printerror(error),
+    }
 }
