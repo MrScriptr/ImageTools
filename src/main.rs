@@ -1,9 +1,12 @@
+use core::arch;
 use std::{clone, env};
 
+#[derive(Debug)]
 enum Command {
     Convert(String),
 }
 
+#[derive(Debug)]
 enum Error {
     InvalidCommand
 }
@@ -20,4 +23,6 @@ fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    let command = parseargs(args);
+    println!("{:?}", command)
 }
