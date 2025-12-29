@@ -1,5 +1,7 @@
 use core::{arch, error};
-use std::{clone, env};
+use std::{clone, env, result};
+
+use image::{ImageError, open};
 
 #[derive(Debug)]
 enum Command {
@@ -9,7 +11,13 @@ enum Command {
 #[derive(Debug)]
 enum Error {
     InvalidCommand,
-    NotEnoughParams
+    NotEnoughParams,
+    Image(ImageError)
+}
+
+enum Output {
+    Ok,
+    Error(Error)
 }
 
 fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
@@ -17,8 +25,8 @@ fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
         return Err(Error::NotEnoughParams);
     }
 
-    let path = args[0].clone();
-    let command = args[1].clone().to_lowercase();
+    let path = args[1].clone();
+    let command = args[2].clone().to_lowercase();
 
     match command.as_str() {
         "convert" => Ok(Command::Convert(path)),
@@ -26,12 +34,31 @@ fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
     }
 }
 
-fn runcommand(command: Command) {
+fn convert(path: String) -> Output {
+    println!("Converting");
+    let openedimage = image::open(&path);
+    match openedimage {
+        Ok(image) => {
+            image.save("output.png");
+            return Output::Ok;
+        },
+        Err(error) => return Output::Error(Error::Image(error)),
+    }
+}
 
+fn runcommand(command: Command) -> Output {
+    match command {
+        Command::Convert(path) => convert(path),
+    }
 }
 
 fn printerror(error: Error) {
-
+    let output = match error {
+        Error::InvalidCommand => "Please use a valid command",
+        Error::NotEnoughParams => "Please use more parameters",
+        Error::Image(err) => "Error parsing Image" 
+    };
+    println!("{}", output);
 }
 
 fn main() {
@@ -39,7 +66,14 @@ fn main() {
     let command = parseargs(args);
 
     match command {
-        Ok(command) => runcommand(command),
+        Ok(command) => {
+            match runcommand(command) {
+                Output::Ok => {},
+                Output::Error(err) => {
+                    printerror(err);
+                }
+            }
+        },
         Err(error) => printerror(error),
     }
 }
