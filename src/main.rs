@@ -4,8 +4,15 @@ use std::{clone, env, result};
 use image::{ImageError, open};
 
 #[derive(Debug)]
-enum Command {
-    Convert(String),
+enum Operation {
+    Convert,
+}
+
+struct Command {
+    Operation: Operation,
+    Source: String,
+    Output: String,
+    Args: Vec<String>
 }
 
 #[derive(Debug)]
@@ -21,25 +28,31 @@ enum Output {
 }
 
 fn parseargs(args: Vec<String>) -> Result<Command, Error>  {
-    if args.len() < 2 {
+    if args.len() < 3 {
         return Err(Error::NotEnoughParams);
     }
 
     let path = args[1].clone();
-    let command = args[2].clone().to_lowercase();
+    let outputpath = args[2].clone();
+    let command = args[3].clone().to_lowercase();
 
     match command.as_str() {
-        "convert" => Ok(Command::Convert(path)),
+        "convert" => Ok(Command {
+            Operation: Operation::Convert,
+            Source: path,
+            Output: outputpath,
+            Args: args
+        }),
         _ => Err(Error::InvalidCommand)
     }
 }
 
-fn convert(path: String) -> Output {
+fn convert(command: Command) -> Output {
     println!("Converting");
-    let openedimage = image::open(&path);
+    let openedimage = image::open(&command.Source);
     match openedimage {
         Ok(image) => {
-            image.save("output.png");
+            image.save(command.Output);
             return Output::Ok;
         },
         Err(error) => return Output::Error(Error::Image(error)),
@@ -47,8 +60,8 @@ fn convert(path: String) -> Output {
 }
 
 fn runcommand(command: Command) -> Output {
-    match command {
-        Command::Convert(path) => convert(path),
+    match &command.Operation {
+        Operation::Convert => convert(command),
     }
 }
 
